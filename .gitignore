@@ -20,6 +20,10 @@ out/
 .env
 .env.*
 
+# Local sqlite
+*.db
+*.db-journal
+
 # Logs
 *.log
 

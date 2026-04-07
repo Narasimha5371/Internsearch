@@ -5,9 +5,9 @@ services:
     image: postgres:16
     container_name: job_agent_postgres
     environment:
-      POSTGRES_USER: job_agent
-      POSTGRES_PASSWORD: job_agent
-      POSTGRES_DB: job_agent
+      POSTGRES_USER: ${POSTGRES_USER:-job_agent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-job_agent}
     ports:
       - "5433:5432"
     volumes:

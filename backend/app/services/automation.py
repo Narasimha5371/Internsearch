@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import ipaddress
 import re
+import socket
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from playwright.async_api import async_playwright
 
@@ -22,6 +25,49 @@ FIELD_MAP = {
     "location": ["location", "city"],
     "headline": ["title", "headline"],
 }
+
+
+def _is_public_ip(value: str) -> bool:
+    ip = ipaddress.ip_address(value)
+    return not (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_multicast
+        or ip.is_reserved
+        or ip.is_unspecified
+    )
+
+
+def _is_allowed_host(hostname: str) -> bool:
+    normalized_host = hostname.strip().lower().rstrip(".")
+    for suffix in settings.allowed_application_host_suffixes:
+        normalized_suffix = suffix.strip().lower().lstrip(".")
+        if not normalized_suffix:
+            continue
+        if normalized_host == normalized_suffix or normalized_host.endswith(f".{normalized_suffix}"):
+            return True
+    return False
+
+
+def _validate_application_url(application_url: str) -> str:
+    parsed = urlparse(application_url)
+    if parsed.scheme != "https":
+        raise ValueError("Only https application URLs are supported.")
+
+    hostname = parsed.hostname
+    if not hostname or not _is_allowed_host(hostname):
+        raise ValueError("Application URL host is not in the allowlist.")
+
+    try:
+        resolved_ips = {item[4][0] for item in socket.getaddrinfo(hostname, None)}
+    except socket.gaierror as exc:
+        raise ValueError("Unable to resolve application URL host.") from exc
+
+    if not resolved_ips or not all(_is_public_ip(ip_value) for ip_value in resolved_ips):
+        raise ValueError("Application URL resolves to a non-public network address.")
+
+    return hostname
 
 
 async def _fill_selector(page, selector: str, value: str | None, key: str, filled: list[str]) -> None:
@@ -172,6 +218,7 @@ async def run_application(
     artifacts_dir: Path,
 ) -> dict[str, Any]:
     artifacts_dir.mkdir(parents=True, exist_ok=True)
+    hostname = _validate_application_url(application_url)
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=settings.playwright_headless)
@@ -183,7 +230,7 @@ async def run_application(
             await browser.close()
             return {"status": "captcha_detected"}
 
-        domain = application_url.lower()
+        domain = hostname.lower()
         filled_fields: list[str] = []
         if "greenhouse" in domain:
             filled_fields.extend(await _fill_greenhouse(page, candidate))
@@ -210,5 +257,5 @@ async def run_application(
         "fields_filled": list(set(filled_fields)),
         "questions_answered": questions_answered,
         "resume_attached": resume_attached,
-        "screenshot": str(screenshot_path),
+        "screenshot": screenshot_path.name,
     }

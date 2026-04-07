@@ -6,6 +6,7 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.rate_limiter import enforce_rate_limit
 from app.api.deps.auth import CurrentUser, get_current_user
 from app.db.deps import get_db
 from app.db.models import ParsedResume
@@ -23,6 +24,12 @@ async def upload_resume(
     db: Session = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
 ):
+    enforce_rate_limit(
+        key=f"resume-upload:{current_user.user_id}",
+        max_requests=settings.resume_upload_rate_limit_count,
+        window_seconds=settings.resume_upload_rate_limit_window_seconds,
+    )
+
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
 
@@ -67,7 +74,7 @@ async def upload_resume(
         user_id=user.id,
         source_filename=file.filename,
         file_path=str(stored_path),
-        raw_text=raw_text,
+        raw_text=raw_text if settings.store_resume_raw_text else None,
         parsed_json=candidate_profile.model_dump(),
     )
     db.add(record)

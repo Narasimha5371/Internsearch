@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.api.deps.auth import CurrentUser, get_current_user
+from app.core.config import settings
+from app.core.rate_limiter import enforce_rate_limit
 from app.db.deps import get_db
 from app.db.models import AutopilotRunLog, AutopilotSettings
 from app.schemas.autopilot import (
@@ -115,6 +117,12 @@ def run_autopilot_now(
     db: Session = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
 ):
+    enforce_rate_limit(
+        key=f"autopilot-run-now:{current_user.user_id}",
+        max_requests=settings.autopilot_run_now_rate_limit_count,
+        window_seconds=settings.autopilot_run_now_rate_limit_window_seconds,
+    )
+
     user = get_or_create_user(db, current_user.user_id, current_user.email)
     _get_or_create_settings(db, user.id)
 

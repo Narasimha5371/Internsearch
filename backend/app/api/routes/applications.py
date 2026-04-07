@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps.auth import CurrentUser, get_current_user
+from app.core.config import settings
+from app.core.rate_limiter import enforce_rate_limit
 from app.db.deps import get_db
 from app.db.models import ApplicationLog, ParsedResume, ScrapedJob
 from app.schemas.application import ApplicationEnqueueResponse, ApplicationLogItem, ApplicationRequest
@@ -17,6 +19,12 @@ from app.workers.application_tasks import run_application_task
 router = APIRouter(prefix="/applications", tags=["applications"])
 
 
+def _public_error_message(log: ApplicationLog) -> str | None:
+    if not log.error_message:
+        return None
+    return "Internal application processing error. Please retry."
+
+
 @router.post("/submit", response_model=ApplicationEnqueueResponse)
 def submit_application(
     payload: ApplicationRequest,
@@ -24,6 +32,11 @@ def submit_application(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     user = get_or_create_user(db, current_user.user_id, current_user.email)
+    enforce_rate_limit(
+        key=f"applications-submit:{current_user.user_id}",
+        max_requests=settings.applications_submit_rate_limit_count,
+        window_seconds=settings.applications_submit_rate_limit_window_seconds,
+    )
     job_id = payload.job_id
 
     if not job_id:
@@ -128,7 +141,7 @@ def list_applications(
                 else log.job.application_url if log.job_id and log.job else None
             ),
             job_id=log.job_id,
-            error_message=log.error_message,
+            error_message=_public_error_message(log),
             created_at=log.created_at.isoformat(),
             result_json=log.result_json,
         )
@@ -161,7 +174,7 @@ def get_application_log(
             else log.job.application_url if log.job_id and log.job else None
         ),
         job_id=log.job_id,
-        error_message=log.error_message,
+        error_message=_public_error_message(log),
         created_at=log.created_at.isoformat(),
         result_json=log.result_json,
     )

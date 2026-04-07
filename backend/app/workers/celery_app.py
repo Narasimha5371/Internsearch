@@ -18,6 +18,8 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
+    task_always_eager=settings.celery_task_always_eager,
+    task_eager_propagates=settings.celery_task_eager_propagates,
     beat_schedule={
         "autopilot-cycle": {
             "task": "app.workers.autopilot.run_cycle",

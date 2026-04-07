@@ -40,6 +40,11 @@ def verify_clerk_token(token: str) -> dict[str, Any]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="CLERK_ISSUER is not configured.",
         )
+    if not settings.clerk_audience:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="CLERK_AUDIENCE is not configured.",
+        )
 
     try:
         headers = jwt.get_unverified_header(token)
@@ -66,7 +71,7 @@ def verify_clerk_token(token: str) -> dict[str, Any]:
             key,
             algorithms=["RS256"],
             issuer=settings.clerk_issuer,
-            options={"verify_aud": False},
+            audience=settings.clerk_audience,
         )
     except jwt.JWTError as exc:
         raise HTTPException(status_code=401, detail="Token verification failed.") from exc

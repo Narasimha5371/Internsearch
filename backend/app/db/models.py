@@ -1,7 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text, func
-from sqlalchemy.dialects.postgresql import JSON, UUID
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, JSON, String, Text, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -10,7 +9,7 @@ from app.db.base import Base
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     clerk_user_id: Mapped[str] = mapped_column(String(128), unique=True, index=True, nullable=False)
     email: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -24,7 +23,7 @@ class User(Base):
 class ParsedResume(Base):
     __tablename__ = "parsed_resumes"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     source_filename: Mapped[str | None] = mapped_column(String(255))
     file_path: Mapped[str | None] = mapped_column(String(1024))
@@ -38,7 +37,7 @@ class ParsedResume(Base):
 class ScrapedJob(Base):
     __tablename__ = "scraped_jobs"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     source: Mapped[str] = mapped_column(String(64))
     source_job_id: Mapped[str | None] = mapped_column(String(128), index=True)
     job_title: Mapped[str] = mapped_column(String(255))
@@ -57,7 +56,7 @@ class ScrapedJob(Base):
 class ApplicationLog(Base):
     __tablename__ = "application_logs"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     job_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("scraped_jobs.id"))
     status: Mapped[str] = mapped_column(String(64))
@@ -73,7 +72,7 @@ class ApplicationLog(Base):
 class AutopilotSettings(Base):
     __tablename__ = "autopilot_settings"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True, unique=True)
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     auto_submit: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -97,7 +96,7 @@ class AutopilotSettings(Base):
 class AutopilotRunLog(Base):
     __tablename__ = "autopilot_run_logs"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     trigger: Mapped[str] = mapped_column(String(32), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False)

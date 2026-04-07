@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.api.deps.auth import CurrentUser, get_current_user
+from app.core.config import settings
+from app.core.rate_limiter import enforce_rate_limit
 from app.db.deps import get_db
 from app.db.models import ScrapedJob
 from app.schemas.job import JobListing, JobScrapeRequest, JobScrapeResult
@@ -49,8 +51,14 @@ def _to_listing(job: ScrapedJob) -> JobListing:
 async def scrape_jobs(
     payload: JobScrapeRequest,
     db: Session = Depends(get_db),
-    _current_user: CurrentUser = Depends(get_current_user),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
+    enforce_rate_limit(
+        key=f"jobs-scrape:{current_user.user_id}",
+        max_requests=settings.jobs_scrape_rate_limit_count,
+        window_seconds=settings.jobs_scrape_rate_limit_window_seconds,
+    )
+
     async with httpx.AsyncClient(timeout=30) as client:
         tasks: list[asyncio.Task[list[JobListing]]] = []
         for company in payload.greenhouse_companies:

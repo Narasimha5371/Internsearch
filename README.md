@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Autonomous Job Application Agent
 
 A greenfield FastAPI + Next.js stack for parsing resumes, aggregating internships, matching candidates, and automating ATS applications with a human-in-the-loop option.
@@ -15,10 +14,12 @@ A greenfield FastAPI + Next.js stack for parsing resumes, aggregating internship
 - Docker Desktop
 
 ## Quick start (local)
-1) Start databases
+1) Optional: start Docker services (Postgres + Redis)
 ```
 docker compose up -d
 ```
+
+If you skip Docker, the backend now defaults to SQLite and in-memory Celery for local development.
 
 2) Backend
 ```
@@ -31,6 +32,8 @@ copy .env.example .env
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
+
+If running without Docker, you can skip `alembic upgrade head`; SQLite schema is created automatically on startup.
 
 3) Frontend
 ```
@@ -46,6 +49,8 @@ cd backend
 celery -A app.workers.celery_app worker --loglevel=info
 ```
 
+If `CELERY_TASK_ALWAYS_EAGER=true` (default in local `.env`), queued tasks run in-process and this worker is optional.
+
 5) Smoke test
 ```
 cd backend
@@ -59,6 +64,4 @@ python app/scripts/smoke_test.py
 ## Notes
 - The LLM adapter defaults to local inference (Ollama) with an optional Groq fallback.
 - This is a prototype intended for local use and testing.
-=======
-# Internsearch
->>>>>>> 22fce51a310c682b82f0769ad2231077c04038b8
+- Clerk token validation requires `CLERK_JWKS_URL`, `CLERK_ISSUER`, and `CLERK_AUDIENCE`.

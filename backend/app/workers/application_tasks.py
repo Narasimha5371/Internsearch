@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import uuid
 from pathlib import Path
 
@@ -8,6 +9,8 @@ from app.db.session import SessionLocal
 from app.schemas.candidate import CandidateProfile
 from app.services.automation import run_application
 from app.workers.celery_app import celery_app
+
+logger = logging.getLogger(__name__)
 
 
 @celery_app.task(bind=True, max_retries=3, name="app.workers.run_application")
@@ -49,12 +52,13 @@ def run_application_task(
 
         return result
     except Exception as exc:  # noqa: BLE001
+        logger.exception("Application task failed for log_id=%s", log_id)
         if log:
             if self.request.retries >= self.max_retries:
                 log.status = "failed"
             else:
                 log.status = "retrying"
-            log.error_message = str(exc)
+            log.error_message = "Internal application processing error."
             db.add(log)
             db.commit()
         if self.request.retries < self.max_retries:

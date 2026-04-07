@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
-from pathlib import Path
+import logging
 import uuid
 
 import httpx
@@ -22,6 +22,8 @@ from app.services.job_scrapers import fetch_greenhouse_jobs, fetch_lever_jobs
 from app.services.job_store import upsert_jobs
 from app.workers.application_tasks import run_application_task
 from app.workers.celery_app import celery_app
+
+logger = logging.getLogger(__name__)
 
 
 def _today_start_utc() -> datetime:
@@ -238,9 +240,10 @@ def run_autopilot_for_user_task(self, user_id: str, trigger: str = "scheduled") 
             "applications_queued": queued_count,
         }
     except Exception as exc:  # noqa: BLE001
+        logger.exception("Autopilot run failed for user_id=%s", user_id)
         if run_log:
             run_log.status = "failed"
-            run_log.message = str(exc)
+            run_log.message = "Internal autopilot processing error."
             run_log.completed_at = datetime.now(timezone.utc)
             db.add(run_log)
             db.commit()
