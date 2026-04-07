@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+.venv/
+venv/
+ENV/
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+out/
+
+# Env and secrets
+.env
+.env.*
+
+# Logs
+*.log
+
+# Local artifacts
+artifacts/
+storage/
+.clerk/
+
+# OS
+.DS_Store
+Thumbs.db

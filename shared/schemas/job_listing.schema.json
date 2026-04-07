@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "job_listing.schema.json",
+  "title": "JobListing",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["job_title", "company", "application_url", "source"],
+  "properties": {
+    "id": {"type": "string"},
+    "job_title": {"type": "string"},
+    "company": {"type": "string"},
+    "location": {"type": "string"},
+    "employment_type": {"type": "string"},
+    "required_skills": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "description": {"type": "string"},
+    "application_url": {"type": "string", "format": "uri"},
+    "source": {"type": "string"},
+    "source_job_id": {"type": "string"},
+    "posted_date": {"type": "string"}
+  }
+}
