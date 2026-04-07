@@ -19,6 +19,7 @@ out/
 # Env and secrets
 .env
 .env.*
+!backend/.env.example
 
 # Local sqlite
 *.db
