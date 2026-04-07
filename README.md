@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Autonomous Job Application Agent
 
 A greenfield FastAPI + Next.js stack for parsing resumes, aggregating internships, matching candidates, and automating ATS applications with a human-in-the-loop option.
@@ -58,3 +59,6 @@ python app/scripts/smoke_test.py
 ## Notes
 - The LLM adapter defaults to local inference (Ollama) with an optional Groq fallback.
 - This is a prototype intended for local use and testing.
+=======
+# Internsearch
+>>>>>>> 22fce51a310c682b82f0769ad2231077c04038b8
